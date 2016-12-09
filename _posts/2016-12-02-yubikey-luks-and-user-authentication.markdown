@@ -29,13 +29,13 @@ Configure yubikey for challenge-response mode in slot 2 (leave yubico OTP defaul
 ykpersonalize -v -2 -ochal-resp -ochal-hmac -ohmac-lt64 -ochal-btn-trig -oserial-api-visible #add -ochal-btn-trig to require button press
 {% endhighlight %}
 
-Now add the new key to LUKS. My device is /dev/sdb2, be sure to update the device to whichever is the encrypted on. Check what keys slots are currently used with `cryptsetup luksDump /dev/sdb2`. If you need to clear a slot use `cryptsetup luksKillSlot /dev/sdb2 [slotnum]`. You will need the original LUKS key handy in order to add a new key.
+Now add the new key to LUKS. My device is /dev/sdb2, be sure to update the device to whichever is the encrypted on. Check what keys slots are currently used with `cryptsetup luksDump /dev/sdb2`. If you need to clear a slot use `cryptsetup luksKillSlot /dev/sdb2 [slotnum]`. You will need the original LUKS key handy in order to add a new key. The `-S7` selects slot 7.
 
 {% highlight shell %}
 read -s PW
 # the -2 for slot 2
 ykchalresp -2 "$PW" | tr -d '\n' > mykeyfile
-cryptsetup luksAddKey /dev/sdb2 mykeyfile
+cryptsetup luksAddKey /dev/sdb2 mykeyfile -S7
 rm mykeyfile
 unset PW
 {% endhighlight %}
