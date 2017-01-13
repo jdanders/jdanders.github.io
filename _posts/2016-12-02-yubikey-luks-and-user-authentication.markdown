@@ -124,3 +124,7 @@ As soon as you save the `pam.d` file, the new rules will be applied. Open a new 
 
 One additional note: I am using LDE for my desktop and when I log in as my user, it still prompts for a password. I just hit `Enter` and it lets me in if the yubikey is plugged in.
 
+
+# Ubuntu
+Adapt this git repo:
+https://github.com/defane/fde-initramfs-hook-yubikey-chalresp
