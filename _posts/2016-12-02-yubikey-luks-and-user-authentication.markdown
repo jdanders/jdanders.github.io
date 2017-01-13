@@ -101,12 +101,13 @@ mkinitcpio -p linux
 
 # Ubuntu 16.10
 
-Before following the instructions below, you need to set up your Yubikey in the same was as described in the Arch section. 
+Before following the instructions below, you need to set up your Yubikey in the same was as described above the Arch section. 
+
 This is mildly adapted from [defane's](https://github.com/defane/fde-initramfs-hook-yubikey-chalresp) repository, which looks like it came from the same instructions linked above for Arch.
 
 Ubuntu has a very different setup for init image creation. The end result here will play very nicely with the existing plymouth graphical boot sequence.
 
-First, we need a script that the built-in crypt module can call, instead of it's usual `askpass`. Create a file called `yubikey_boot_chalresp` (I put it in `/usr/local/bin`) and make it executable:
+First, we need a script that the built-in crypt module can call, instead of its usual `askpass`. Create a file called `yubikey_boot_chalresp` (I put it in `/usr/local/bin`) and make it executable:
 
 {% highlight shell %}
 sudo touch /usr/local/bin/yubikey_boot_chalresp
@@ -228,7 +229,7 @@ chmod 777 /var/yubico/
 {% endhighlight %}
 Now as your user, create the challenge file (using slot 2 again). The created file must be of the form `/var/yubico/[username]-[yubi-serial]`.
 
-{% highlight shell %}
+{% highlight none %}
 $ ykpamcfg -2 -v -p /var/yubico
 ...
 Stored initial challenge and expected response in '/var/yubico/alice-123456'.
@@ -236,12 +237,12 @@ Stored initial challenge and expected response in '/var/yubico/alice-123456'.
 
 Now add pam_yubico.so to the pam config. My `/etc/pam.d/system-auth` file had this line:
 
-{% highlight shell %}
+{% highlight conf %}
 auth   required  pam_unix.so   try_first_pass nullok
 {% endhighlight %}
 
 I added a line above that so it looked like this:
-{% highlight shell %}
+{% highlight conf %}
 auth   sufficient pam_yubico.so mode=challenge-response chalresp_path=/var/yubico
 auth   required   pam_unix.so   try_first_pass nullok
 {% endhighlight %}
