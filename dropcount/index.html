@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dropcount - Neon Puzzle</title>
+    <style>
+        :root {
+            --space-black: #0a0e27;
+            --midnight-void: #151b3d;
+            --deep-navy: #1e2749;
+            --cyan-glow: #88ffff;
+            --magenta-pulse: #ff00e5;
+            --amber-alert: #ffb800;
+            --lime-beam: #39ff14;
+            --grid-line: #334488;
+            --grid-glow: #5577ff;
+            --text-main: #e0e0e0;
+            --text-dim: #8899cc;
+            --disc-1: #ff00e5;
+            --disc-2: #ffb800;
+            --disc-3: #39ff14;
+            --disc-4: #88ffff;
+            --disc-5: #ff5e5e;
+            --disc-6: #a020f0;
+            --disc-7: #ffffff;
+            --solid-base: #2d3561;
+            --solid-glow: #4a5a9e;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--space-black);
+            color: var(--text-main);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+            touch-action: manipulation;
+        }
+
+        header {
+            width: 100%;
+            padding: 20px 0;
+            text-align: center;
+            background: linear-gradient(to bottom, var(--midnight-void), var(--space-black));
+            border-bottom: 1px solid var(--grid-line);
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            color: var(--cyan-glow);
+            text-shadow: 0 0 10px var(--cyan-glow), 0 0 20px var(--cyan-glow);
+            font-weight: 800;
+        }
+
+        .stats-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            max-width: 500px;
+            margin-bottom: 10px;
+            padding: 0 5px;
+        }
+
+        .stat-box {
+            background: var(--deep-navy);
+            border: 1px solid var(--grid-line);
+            border-radius: 8px;
+            padding: 5px 10px;
+            text-align: center;
+            flex: 1;
+            margin: 0 5px;
+            box-shadow: 0 0 5px rgba(85, 119, 255, 0.2);
+            min-height: 50px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            margin-bottom: 5px;
+            letter-spacing: 1px;
+        }
+
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--cyan-glow);
+        }
+
+        #game-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #next-disc-preview {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #game-canvas {
+            background-color: var(--midnight-void);
+            border: 2px solid var(--grid-line);
+            border-radius: 4px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5), 0 0 10px var(--grid-glow);
+            cursor: pointer;
+            width: 95%;
+            max-width: 480px;
+            touch-action: none;
+            display: block;
+        }
+
+        #preview-canvas {
+            width: 50px;
+            height: 50px;
+            background: transparent;
+            border: none;
+            box-shadow: none;
+        }
+
+        .indicator-container {
+            width: 95%;
+            max-width: 480px;
+            margin-top: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .drops-indicator {
+            display: flex;
+            justify-content: space-between;
+            flex: 1;
+            padding-right: 15px; /* Space for chain multiplier */
+        }
+
+        .mini-disc {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--grid-glow);
+            opacity: 0.6;
+            box-shadow: 0 0 3px var(--grid-glow);
+        }
+
+        .mini-disc.empty {
+            background-color: transparent;
+            border: 1px solid var(--grid-line);
+            opacity: 0.3;
+            box-shadow: none;
+        }
+
+        .chain-indicator {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--magenta-pulse);
+            text-shadow: 0 0 10px var(--magenta-pulse);
+            visibility: hidden;
+        }
+
+        .chain-indicator.active {
+            visibility: visible;
+            animation: pulse 0.5s infinite alternate;
+        }
+
+        @keyframes pulse {
+            from { transform: scale(1); opacity: 0.8; }
+            to { transform: scale(1.1); opacity: 1; }
+        }
+
+        .instructions {
+            max-width: 500px;
+            padding: 20px;
+            margin-top: 30px;
+            background: var(--deep-navy);
+            border: 1px solid var(--grid-line);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            color: var(--text-dim);
+        }
+
+        .instructions h2 {
+            color: var(--cyan-glow);
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+        }
+
+        .instructions ul {
+            padding-left: 20px;
+        }
+
+        .instructions li {
+            margin-bottom: 8px;
+        }
+
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 14, 39, 0.85);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+
+        .overlay.visible {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .overlay h2 {
+            font-size: 3rem;
+            color: var(--magenta-pulse);
+            margin-bottom: 20px;
+            text-shadow: 0 0 15px var(--magenta-pulse);
+        }
+
+        .overlay p {
+            font-size: 1.5rem;
+            margin-bottom: 30px;
+        }
+
+        .btn {
+            background: transparent;
+            border: 2px solid var(--cyan-glow);
+            color: var(--cyan-glow);
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 0 10px var(--cyan-glow);
+        }
+
+        .btn:hover {
+            background: var(--cyan-glow);
+            color: var(--space-black);
+            box-shadow: 0 0 20px var(--cyan-glow);
+        }
+
+        footer {
+            margin-top: auto;
+            padding: 40px 20px;
+            text-align: center;
+            width: 100%;
+            color: var(--text-dim);
+            font-size: 0.8rem;
+        }
+
+        footer a {
+            color: var(--cyan-glow);
+            text-decoration: none;
+        }
+
+        /* Mobile specific adjustments */
+        @media (max-width: 500px) {
+            h1 { font-size: 1.8rem; }
+            .stat-value { font-size: 1rem; }
+            .overlay h2 { font-size: 2.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Dropcount</h1>
+</header>
+
+    <div class="stats-container">
+        <div class="stat-box">
+            <div class="stat-label">Score</div>
+            <div id="score" class="stat-value">0</div>
+        </div>
+        <div class="stat-box" style="flex: 0 0 70px; background: transparent; border: none; box-shadow: none;">
+            <div class="stat-label">Next</div>
+            <div id="next-disc-preview">
+                <canvas id="preview-canvas"></canvas>
+            </div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-label">Best</div>
+            <div id="high-score" class="stat-value">0</div>
+        </div>
+    </div>
+
+    <div id="game-container">
+        <canvas id="game-canvas"></canvas>
+    
+    <div class="indicator-container">
+        <div id="drops-indicator" class="drops-indicator">
+            <!-- Mini discs will be generated here -->
+        </div>
+        <div id="chain-multiplier" class="chain-indicator">x1</div>
+    </div>
+
+    <div id="game-over-overlay" class="overlay">
+        <h2>GAME OVER</h2>
+        <p id="final-score">Score: 0</p>
+        <button id="restart-btn" class="btn">Play Again</button>
+    </div>
+
+    <div id="start-overlay" class="overlay visible">
+        <h2 style="color: var(--cyan-glow); text-shadow: 0 0 15px var(--cyan-glow);">DROPCOUNT</h2>
+        <p style="text-align: center; font-size: 1.1rem; max-width: 80%; margin-bottom: 40px;">
+            A neon-infused puzzle game of chains and strategy.
+        </p>
+        <button id="start-btn" class="btn">Start Game</button>
+    </div>
+</div>
+
+<div class="instructions">
+    <h2>How to Play</h2>
+    <ul>
+        <li><strong>Tap a column</strong> to drop the current disc.</li>
+        <li><strong>Match numbers</strong>: A disc breaks when the number of contiguous discs in its row OR column equals its number.</li>
+        <li><strong>Solid Discs</strong>: Gray discs crack when an adjacent disc breaks. They reveal a number after 2 cracks.</li>
+        <li><strong>Chain Reactions</strong>: Breaking discs can trigger more breaks for massive bonus points!</li>
+        <li><strong>New Rows</strong>: A new row appears from the bottom every 30 drops. Don't let the grid overflow!</li>
+    </ul>
+</div>
+
+<footer>
+    <p>Inspired by the original Drop7. Built with Neon Aesthetics.</p>
+    <p style="margin-top: 15px; display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;">
+        <a href="https://github.com/jdanders/dropcount" target="_blank">Source Code</a>
+        <a href="https://f-droid.org/en/packages/io.github.jdanders.dropcount/" target="_blank">Download on F-Droid</a>
+    </p>
+</footer>
+
+<script>
+    // Constants & Config
+    const GRID_SIZE = 7;
+    const COLORS = {
+        background: '#0a0e27',
+        midnight: '#151b3d',
+        gridLine: '#334488',
+        gridGlow: '#5577ff',
+        cyan: '#88ffff',
+        magenta: '#ff00e5',
+        amber: '#ffb800',
+        lime: '#39ff14',
+        disc: [
+            null, // index 0 unused
+            '#ff00e5', // 1
+            '#ffb800', // 2
+            '#39ff14', // 3
+            '#88ffff', // 4
+            '#ff5e5e', // 5
+            '#a020f0', // 6
+            '#ffffff'  // 7
+        ],
+        solid: '#2d3561',
+        solidGlow: '#4a5a9e',
+        cracked: '#5d6fa8'
+    };
+
+    const ANIM_SPEEDS = {
+        drop: 300,
+        highlight: 600,
+        gravity: 200,
+        break: 400,
+        newRow: 400
+    };
+
+    const SCORING = {
+        base: 7,
+        calculate: (n) => Math.floor((7/6)*Math.pow(n, 3) + 12*Math.pow(n, 2) - (73/6)*n + 6),
+        levelBonus: 7000,
+        boardClear: 70000
+    };
+
+    // Game Classes
+    class Disc {
+        constructor(type, value = 0) {
+            this.type = type; // 'numbered', 'solid'
+            this.value = value;
+            this.cracks = 0;
+            this.id = Math.random().toString(36).substr(2, 9);
+        }
+
+        static numbered(val) { return new Disc('numbered', val); }
+        static solid() { return new Disc('solid'); }
+
+        isOccupied() { return true; }
+        isNumbered() { return this.type === 'numbered'; }
+        isSolid() { return this.type === 'solid'; }
+
+        addCrack() {
+            if (this.isSolid()) {
+                this.cracks++;
+                if (this.cracks >= 2) {
+                    this.type = 'numbered';
+                    this.value = Math.floor(Math.random() * 7) + 1;
+                    return true; // Revealed
+                }
+            }
+            return false;
+        }
+
+        copy() {
+            const d = new Disc(this.type, this.value);
+            d.cracks = this.cracks;
+            return d;
+        }
+    }
+
+    class GameState {
+        constructor() {
+            this.grid = Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE).fill(null));
+            this.score = 0;
+            this.highScore = parseInt(localStorage.getItem('dropcount-highscore')) || 0;
+            this.level = 1;
+            this.dropsUntilNewRow = 30;
+            this.totalDrops = 0;
+            this.nextDisc = this.generateDisc();
+            this.status = 'playing'; // 'playing', 'animating', 'gameover'
+            this.chainLevel = 0;
+        }
+
+        generateDisc() {
+            // 80% numbered, 20% solid
+            if (Math.random() < 0.8) {
+                return Disc.numbered(Math.floor(Math.random() * 7) + 1);
+            } else {
+                return Disc.solid();
+            }
+        }
+
+        getCell(r, c) { return this.grid[r][c]; }
+        isOccupied(r, c) { return this.grid[r][c] !== null; }
+        isEmpty(r, c) { return this.grid[r][c] === null; }
+
+        getFirstEmptyRow(col) {
+            for (let r = GRID_SIZE - 1; r >= 0; r--) {
+                if (this.isEmpty(r, col)) return r;
+            }
+            return -1;
+        }
+
+        countContiguousInRow(row, col) {
+            if (this.isEmpty(row, col)) return 0;
+            let count = 1;
+            // Left
+            for (let c = col - 1; c >= 0 && this.isOccupied(row, c); c--) count++;
+            // Right
+            for (let c = col + 1; c < GRID_SIZE && this.isOccupied(row, c); c++) count++;
+            return count;
+        }
+
+        countContiguousInCol(row, col) {
+            if (this.isEmpty(row, col)) return 0;
+            let count = 1;
+            // Up
+            for (let r = row - 1; r >= 0 && this.isOccupied(r, col); r--) count++;
+            // Down
+            for (let r = row + 1; r < GRID_SIZE && this.isOccupied(r, col); r++) count++;
+            return count;
+        }
+
+        getMatches() {
+            const matches = [];
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    const disc = this.getCell(r, c);
+                    if (disc && disc.isNumbered()) {
+                        const rowCount = this.countContiguousInRow(r, c);
+                        const colCount = this.countContiguousInCol(r, c);
+                        if (rowCount === disc.value || colCount === disc.value) {
+                            matches.push({r, c, disc, rowMatch: rowCount === disc.value, colMatch: colCount === disc.value});
+                        }
+                    }
+                }
+            }
+            return matches;
+        }
+
+        applyGravity() {
+            const movements = [];
+            for (let c = 0; c < GRID_SIZE; c++) {
+                let emptyRow = GRID_SIZE - 1;
+                for (let r = GRID_SIZE - 1; r >= 0; r--) {
+                    if (this.isOccupied(r, c)) {
+                        if (r !== emptyRow) {
+                            movements.push({fromR: r, fromC: c, toR: emptyRow, toC: c, disc: this.grid[r][c]});
+                            this.grid[emptyRow][c] = this.grid[r][c];
+                            this.grid[r][c] = null;
+                        }
+                        emptyRow--;
+                    }
+                }
+            }
+            return movements;
+        }
+
+        addNewRow() {
+            // Check if game over (top row occupied)
+            for (let c = 0; c < GRID_SIZE; c++) {
+                if (this.isOccupied(0, c)) {
+                    this.status = 'gameover';
+                    return false;
+                }
+            }
+
+            // Shift up
+            for (let r = 0; r < GRID_SIZE - 1; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    this.grid[r][c] = this.grid[r + 1][c];
+                }
+            }
+
+            // New bottom row (always solid)
+            for (let c = 0; c < GRID_SIZE; c++) {
+                this.grid[GRID_SIZE - 1][c] = Disc.solid();
+            }
+
+            this.level++;
+            this.score += SCORING.levelBonus;
+            this.dropsUntilNewRow = Math.max(5, 30 - (this.level - 1));
+            return true;
+        }
+    }
+
+    class Renderer {
+        constructor(canvas, previewCanvas) {
+            this.canvas = canvas;
+            this.ctx = canvas.getContext('2d');
+            this.previewCanvas = previewCanvas;
+            this.pCtx = previewCanvas.getContext('2d');
+            this.resize();
+            window.addEventListener('resize', () => this.resize());
+        }
+
+        resize() {
+            const dpr = window.devicePixelRatio || 1;
+            const container = document.getElementById('game-container');
+            const width = Math.min(container.clientWidth * 0.95, 480);
+            
+            // Main game canvas
+            this.canvas.style.width = width + 'px';
+            this.canvas.style.height = width + 'px';
+            this.canvas.width = width * dpr;
+            this.canvas.height = width * dpr;
+            this.ctx.scale(dpr, dpr);
+            this.cellSize = width / GRID_SIZE;
+
+            // Preview canvas
+            const previewSize = 50;
+            this.previewCanvas.style.width = previewSize + 'px';
+            this.previewCanvas.style.height = previewSize + 'px';
+            this.previewCanvas.width = previewSize * dpr;
+            this.previewCanvas.height = previewSize * dpr;
+            this.pCtx.scale(dpr, dpr);
+        }
+
+        clear() {
+            this.ctx.fillStyle = COLORS.midnight;
+            this.ctx.fillRect(0, 0, this.canvas.width / (window.devicePixelRatio || 1), this.canvas.height / (window.devicePixelRatio || 1));
+        }
+
+        drawGrid() {
+            this.ctx.save();
+            this.ctx.strokeStyle = COLORS.gridLine;
+            this.ctx.lineWidth = 1;
+            this.ctx.shadowBlur = 5;
+            this.ctx.shadowColor = COLORS.gridGlow;
+            for (let i = 1; i < GRID_SIZE; i++) {
+                const pos = i * this.cellSize;
+                // Vertical
+                this.ctx.beginPath();
+                this.ctx.moveTo(pos, 0);
+                this.ctx.lineTo(pos, this.canvas.height / (window.devicePixelRatio || 1));
+                this.ctx.stroke();
+                // Horizontal
+                this.ctx.beginPath();
+                this.ctx.moveTo(0, pos);
+                this.ctx.lineTo(this.canvas.width / (window.devicePixelRatio || 1), pos);
+                this.ctx.stroke();
+            }
+            this.ctx.restore();
+        }
+
+        drawDisc(r, c, disc, scale = 1, alpha = 1, offsetY = 0) {
+            const x = c * this.cellSize + this.cellSize / 2;
+            const y = r * this.cellSize + this.cellSize / 2 + offsetY;
+            const radius = (this.cellSize / 2) * 0.8 * scale;
+
+            this.ctx.save();
+            this.ctx.globalAlpha = alpha;
+
+            // Glow
+            this.ctx.shadowBlur = 10;
+            
+            if (disc.isNumbered()) {
+                const color = COLORS.disc[disc.value];
+                this.ctx.shadowColor = color;
+                
+                // Outer circle
+                this.ctx.beginPath();
+                this.ctx.arc(x, y, radius, 0, Math.PI * 2);
+                this.ctx.fillStyle = COLORS.background;
+                this.ctx.fill();
+                this.ctx.strokeStyle = color;
+                this.ctx.lineWidth = 3;
+                this.ctx.stroke();
+
+                // Inner circle
+                this.ctx.beginPath();
+                this.ctx.arc(x, y, radius * 0.8, 0, Math.PI * 2);
+                this.ctx.fillStyle = color + '22';
+                this.ctx.fill();
+
+                // Number
+                this.ctx.fillStyle = color;
+                this.ctx.font = `bold ${radius}px Arial`;
+                this.ctx.textAlign = 'center';
+                this.ctx.textBaseline = 'middle';
+                this.ctx.shadowBlur = 5;
+                this.ctx.fillText(disc.value, x, y);
+            } else {
+                // Solid
+                const color = disc.cracks > 0 ? COLORS.cracked : COLORS.solid;
+                this.ctx.shadowColor = COLORS.solidGlow;
+                
+                this.ctx.beginPath();
+                this.ctx.arc(x, y, radius, 0, Math.PI * 2);
+                this.ctx.fillStyle = color;
+                this.ctx.fill();
+                this.ctx.strokeStyle = COLORS.solidGlow;
+                this.ctx.lineWidth = 2;
+                this.ctx.stroke();
+
+                if (disc.cracks > 0) {
+                    // Draw crack
+                    this.ctx.strokeStyle = '#ffffff88';
+                    this.ctx.lineWidth = 2;
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(x - radius * 0.5, y - radius * 0.3);
+                    this.ctx.lineTo(x + radius * 0.4, y + radius * 0.5);
+                    this.ctx.stroke();
+                }
+            }
+
+            this.ctx.restore();
+        }
+
+        drawPreview(disc) {
+            const size = 50;
+            this.pCtx.clearRect(0, 0, size, size);
+            const x = size / 2, y = size / 2, radius = size * 0.4;
+            
+            this.pCtx.save();
+            this.pCtx.shadowBlur = 10;
+
+            if (disc.isNumbered()) {
+                const color = COLORS.disc[disc.value];
+                this.pCtx.shadowColor = color;
+                this.pCtx.beginPath();
+                this.pCtx.arc(x, y, radius, 0, Math.PI * 2);
+                this.pCtx.fillStyle = COLORS.background;
+                this.pCtx.fill();
+                this.pCtx.strokeStyle = color;
+                this.pCtx.lineWidth = 3;
+                this.pCtx.stroke();
+                this.pCtx.fillStyle = color;
+                this.pCtx.font = `bold ${radius}px Arial`;
+                this.pCtx.textAlign = 'center';
+                this.pCtx.textBaseline = 'middle';
+                this.pCtx.fillText(disc.value, x, y);
+            } else {
+                this.pCtx.shadowColor = COLORS.solidGlow;
+                this.pCtx.beginPath();
+                this.pCtx.arc(x, y, radius, 0, Math.PI * 2);
+                this.pCtx.fillStyle = COLORS.solid;
+                this.pCtx.fill();
+                this.pCtx.strokeStyle = COLORS.solidGlow;
+                this.pCtx.lineWidth = 2;
+                this.pCtx.stroke();
+            }
+            this.pCtx.restore();
+        }
+
+        drawHighlight(r, c, color) {
+            const x = c * this.cellSize + this.cellSize / 2;
+            const y = r * this.cellSize + this.cellSize / 2;
+            const radius = (this.cellSize / 2) * 1.1;
+
+            this.ctx.save();
+            this.ctx.beginPath();
+            this.ctx.arc(x, y, radius, 0, Math.PI * 2);
+            this.ctx.strokeStyle = color;
+            this.ctx.lineWidth = 4;
+            this.ctx.setLineDash([5, 5]);
+            this.ctx.stroke();
+            this.ctx.restore();
+        }
+    }
+
+    class Engine {
+        constructor() {
+            this.state = new GameState();
+            this.canvas = document.getElementById('game-canvas');
+            this.renderer = new Renderer(this.canvas, document.getElementById('preview-canvas'));
+            this.animations = [];
+            this.init();
+        }
+
+        init() {
+            this.canvas.addEventListener('click', (e) => this.handleClick(e));
+            this.canvas.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                this.handleClick(e.touches[0]);
+            });
+
+            document.getElementById('start-btn').onclick = () => {
+                document.getElementById('start-overlay').classList.remove('visible');
+                this.start();
+            };
+
+            document.getElementById('restart-btn').onclick = () => {
+                document.getElementById('game-over-overlay').classList.remove('visible');
+                this.state = new GameState();
+                this.updateUI();
+                this.start();
+            };
+
+            this.updateUI();
+            this.loop();
+        }
+
+        start() {
+            // Initial setup - add some random discs
+            for (let i = 0; i < 10; i++) {
+                const col = Math.floor(Math.random() * GRID_SIZE);
+                const row = this.state.getFirstEmptyRow(col);
+                if (row !== -1) {
+                    this.state.grid[row][col] = this.state.generateDisc();
+                }
+            }
+            // Resolve any initial matches silently
+            while(this.state.getMatches().length > 0) {
+                const matches = this.state.getMatches();
+                matches.forEach(m => this.state.grid[m.r][m.c] = null);
+                this.state.applyGravity();
+            }
+            this.state.status = 'playing';
+            this.updateUI();
+        }
+
+        handleClick(e) {
+            if (this.state.status !== 'playing') return;
+
+            const rect = this.canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const col = Math.floor(x / this.renderer.cellSize);
+            
+            if (col >= 0 && col < GRID_SIZE) {
+                this.dropDisc(col);
+            }
+        }
+
+        async dropDisc(col) {
+            const targetRow = this.state.getFirstEmptyRow(col);
+            if (targetRow === -1) {
+                this.gameOver();
+                return;
+            }
+
+            this.state.status = 'animating';
+            const disc = this.state.nextDisc;
+            this.state.nextDisc = this.state.generateDisc();
+            this.renderer.drawPreview(this.state.nextDisc);
+
+            // Drop Animation
+            await this.animateDrop(col, targetRow, disc);
+            this.state.grid[targetRow][col] = disc;
+            this.state.totalDrops++;
+            this.state.dropsUntilNewRow--;
+            this.state.chainLevel = 0;
+
+            await this.resolveMatches();
+
+            // Check New Row
+            if (this.state.dropsUntilNewRow <= 0) {
+                await this.animateNewRow();
+                await this.resolveMatches();
+            }
+
+            if (this.state.status !== 'gameover') {
+                this.state.status = 'playing';
+            }
+            this.updateUI();
+        }
+
+        async resolveMatches() {
+            let hasMatches = true;
+            while (hasMatches) {
+                const matches = this.state.getMatches();
+                if (matches.length === 0) {
+                    hasMatches = false;
+                    break;
+                }
+
+                this.state.chainLevel++;
+                this.updateUI();
+
+                // Highlight
+                await this.animateHighlight(matches);
+
+                // Points & Break
+                const scoreGain = SCORING.calculate(this.state.chainLevel) * matches.length;
+                this.state.score += scoreGain;
+                if (this.state.score > this.state.highScore) {
+                    this.state.highScore = this.state.score;
+                    localStorage.setItem('dropcount-highscore', this.state.highScore);
+                }
+
+                // Crack adjacent
+                matches.forEach(m => {
+                    const adj = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+                    adj.forEach(([dr, dc]) => {
+                        const nr = m.r + dr, nc = m.c + dc;
+                        if (nr >= 0 && nr < GRID_SIZE && nc >= 0 && nc < GRID_SIZE) {
+                            const d = this.state.getCell(nr, nc);
+                            if (d && d.isSolid()) d.addCrack();
+                        }
+                    });
+                    this.state.grid[m.r][m.c] = null;
+                });
+
+                await this.animateGravity();
+            }
+
+            // Board Clear check
+            let occupied = 0;
+            for(let r=0; r<GRID_SIZE; r++) for(let c=0; c<GRID_SIZE; c++) if(this.state.grid[r][c]) occupied++;
+            if (occupied === 0) {
+                this.state.score += SCORING.boardClear;
+                this.updateUI();
+            }
+        }
+
+        animateDrop(col, row, disc) {
+            return new Promise(resolve => {
+                const startTime = performance.now();
+                const anim = (now) => {
+                    const elapsed = now - startTime;
+                    const progress = Math.min(elapsed / ANIM_SPEEDS.drop, 1);
+                    // Start from row -1 to row
+                    const currentY = (progress * (row + 1) - 1) * this.renderer.cellSize;
+                    
+                    this.render();
+                    this.renderer.drawDisc(0, col, disc, 1, 1, currentY);
+
+                    if (progress < 1) requestAnimationFrame(anim);
+                    else resolve();
+                };
+                requestAnimationFrame(anim);
+            });
+        }
+
+        animateHighlight(matches) {
+            return new Promise(resolve => {
+                const startTime = performance.now();
+                const anim = (now) => {
+                    const elapsed = now - startTime;
+                    const progress = Math.min(elapsed / ANIM_SPEEDS.highlight, 1);
+                    const alpha = 1 - progress;
+                    const scale = 1 + progress * 0.5;
+
+                    this.render();
+                    matches.forEach(m => {
+                        this.renderer.drawHighlight(m.r, m.c, COLORS.magenta);
+                        this.renderer.drawDisc(m.r, m.c, m.disc, scale, alpha);
+                    });
+
+                    if (progress < 1) requestAnimationFrame(anim);
+                    else resolve();
+                };
+                requestAnimationFrame(anim);
+            });
+        }
+
+        animateGravity() {
+            const movements = this.state.applyGravity();
+            if (movements.length === 0) return Promise.resolve();
+
+            return new Promise(resolve => {
+                const startTime = performance.now();
+                const anim = (now) => {
+                    const elapsed = now - startTime;
+                    const progress = Math.min(elapsed / ANIM_SPEEDS.gravity, 1);
+                    
+                    this.renderer.clear();
+                    this.renderer.drawGrid();
+                    
+                    // Draw non-moving discs
+                    for(let r=0; r<GRID_SIZE; r++) {
+                        for(let c=0; c<GRID_SIZE; c++) {
+                            const disc = this.state.grid[r][c];
+                            if (disc && !movements.find(m => m.toR === r && m.toC === c)) {
+                                this.renderer.drawDisc(r, c, disc);
+                            }
+                        }
+                    }
+
+                    // Draw moving discs
+                    movements.forEach(m => {
+                        const currentR = m.fromR + (m.toR - m.fromR) * progress;
+                        this.renderer.drawDisc(currentR, m.fromC, m.disc);
+                    });
+
+                    if (progress < 1) requestAnimationFrame(anim);
+                    else resolve();
+                };
+                requestAnimationFrame(anim);
+            });
+        }
+
+        animateNewRow() {
+            return new Promise(resolve => {
+                const success = this.state.addNewRow();
+                if (!success) {
+                    this.gameOver();
+                    resolve();
+                    return;
+                }
+
+                const startTime = performance.now();
+                const anim = (now) => {
+                    const elapsed = now - startTime;
+                    const progress = Math.min(elapsed / ANIM_SPEEDS.newRow, 1);
+                    const offsetY = (1 - progress) * this.renderer.cellSize;
+
+                    this.renderer.clear();
+                    this.renderer.drawGrid();
+                    
+                    for(let r=0; r<GRID_SIZE; r++) {
+                        for(let c=0; c<GRID_SIZE; c++) {
+                            const disc = this.state.grid[r][c];
+                            if (disc) {
+                                this.renderer.drawDisc(r, c, disc, 1, 1, offsetY);
+                            }
+                        }
+                    }
+
+                    if (progress < 1) requestAnimationFrame(anim);
+                    else resolve();
+                };
+                requestAnimationFrame(anim);
+            });
+        }
+
+        gameOver() {
+            this.state.status = 'gameover';
+            document.getElementById('final-score').innerText = `Score: ${this.state.score}`;
+            document.getElementById('game-over-overlay').classList.add('visible');
+        }
+
+        updateUI() {
+            document.getElementById('score').innerText = this.state.score.toLocaleString();
+            document.getElementById('high-score').innerText = this.state.highScore.toLocaleString();
+            
+            const indicator = document.getElementById('drops-indicator');
+            indicator.innerHTML = '';
+            for (let i = 0; i < 30; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'mini-disc' + (i >= this.state.dropsUntilNewRow ? ' empty' : '');
+                indicator.appendChild(dot);
+            }
+
+            const chain = document.getElementById('chain-multiplier');
+            if (this.state.chainLevel > 1) {
+                chain.innerText = `x${this.state.chainLevel}`;
+                chain.classList.add('active');
+            } else {
+                chain.classList.remove('active');
+            }
+
+            this.renderer.drawPreview(this.state.nextDisc);
+        }
+
+        render() {
+            this.renderer.clear();
+            this.renderer.drawGrid();
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    const disc = this.state.grid[r][c];
+                    if (disc) {
+                        this.renderer.drawDisc(r, c, disc);
+                    }
+                }
+            }
+        }
+
+        loop() {
+            if (this.state.status === 'playing') {
+                this.render();
+            }
+            requestAnimationFrame(() => this.loop());
+        }
+    }
+
+    // Start
+    window.onload = () => {
+        new Engine();
+    };
+</script>
+
+</body>
+</html>
